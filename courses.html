@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Navigation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #f5f5f5;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar li {
+            margin: 10px 0;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: #666;
+            padding: 5px 10px;
+            display: block;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar a:hover {
+            background-color: #e0e0e0;
+        }
+
+        .sidebar a.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        #content-area {
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Markdown content styling */
+        #content-area h3 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        #content-area h4 {
+            color: #444;
+            margin-top: 20px;
+        }
+
+        #content-area ul {
+            padding-left: 20px;
+        }
+
+        #content-area li {
+            margin: 5px 0;
+        }
+    </style>
+    <!-- Include marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>课程目录</h2>
+            <ul id="nav-list">
+                <!-- Navigation items will be dynamically inserted here -->
+            </ul>
+        </nav>
+        <main class="content">
+            <div id="content-area">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+        </main>
+    </div>
+    <script>
+        const chapters = [
+            { id: 1, title: "企业数字化的背景和趋势" },
+            { id: 2, title: "企业数字化的挑战" },
+            { id: 3, title: "企业数字化的机遇" },
+            { id: 4, title: "企业数字化的关键要素" },
+            { id: 5, title: "企业数字化的策略" },
+            { id: 6, title: "企业数字化的路径" },
+            { id: 7, title: "企业数字化与知识产权管理" },
+            { id: 8, title: "企业数字化科技情报平台建设" }
+        ];
+
+        // Initialize the navigation
+        function initializeNavigation() {
+            const navList = document.getElementById('nav-list');
+
+            chapters.forEach(chapter => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = `#ch${chapter.id}`;
+                a.textContent = `第${chapter.id}节课：${chapter.title}`;
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    loadChapter(chapter.id);
+                    updateActiveLink(a);
+                };
+                li.appendChild(a);
+                navList.appendChild(li);
+            });
+
+            // Load the first chapter by default
+            loadChapter(1);
+            updateActiveLink(document.querySelector('#nav-list a'));
+        }
+
+        // Load chapter content
+        async function loadChapter(chapterNum) {
+            try {
+                const response = await fetch(`ch${chapterNum}.md`);
+                if (!response.ok) throw new Error('Failed to load chapter');
+
+                const markdown = await response.text();
+                const contentArea = document.getElementById('content-area');
+                contentArea.innerHTML = marked.parse(markdown);
+
+                // Update URL without page reload
+                history.pushState(null, '', `#ch${chapterNum}`);
+            } catch (error) {
+                console.error('Error loading chapter:', error);
+                document.getElementById('content-area').innerHTML = '<p>Error loading chapter content.</p>';
+            }
+        }
+
+        // Update active link in navigation
+        function updateActiveLink(activeLink) {
+            // Remove active class from all links
+            document.querySelectorAll('#nav-list a').forEach(link => {
+                link.classList.remove('active');
+            });
+            // Add active class to current link
+            activeLink.classList.add('active');
+        }
+
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', () => {
+            const hash = window.location.hash;
+            if (hash) {
+                const chapterNum = hash.replace('#ch', '');
+                loadChapter(chapterNum);
+                updateActiveLink(document.querySelector(`a[href="${hash}"]`));
+            }
+        });
+
+        // Initialize when the page loads
+        document.addEventListener('DOMContentLoaded', initializeNavigation);
+    </script>
+</body>
+
+</html>
